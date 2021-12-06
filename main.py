@@ -1,14 +1,21 @@
 from libs import Awd
-from libs import Print_help
-from libs import Output_color
+from libs import Help
+from libs.OutputColor import Color
 from prompt_toolkit import prompt
 from prompt_toolkit.history import InMemoryHistory
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 
 def error():
-    output = Output_color.Color('Can\'t press Ctrl+C!', 'red').print()
-    print(output)
+    print(Color('Can\'t press Ctrl+C!', 'red').print())
+
+def logo():
+    file_object = open("./logo.log")
+    try:
+        logo_tip = file_object.read()
+    finally:
+        file_object.close()
+    print(Color(logo_tip, 'green').print())
 
 def main():
     inputHistory = InMemoryHistory()
@@ -19,6 +26,7 @@ def main():
          'load',
          'clean',
          'add_attack_target',
+         'scan_attack_targets',
          'show_attack_targets',
          'delete_attack_target',
          'add_attack_shell',
@@ -29,10 +37,8 @@ def main():
          'submit_flags',
          'set_attack_time']
     )
-
+    logo()
     awd = Awd.Awd()
-    help = Print_help.help()
-
     while True:
         try:
             inputData = prompt('[+]> ', history=inputHistory, completer=inputCommand, auto_suggest=AutoSuggestFromHistory())
@@ -42,25 +48,27 @@ def main():
             elif inputData == 'exit':
                 break
             elif inputData == 'help':
-                help.put()
+                awd.Help.put()
             elif inputData == 'save':
-                pass
+                awd.Cache.save(awd.Targets, awd.WebShell)
             elif inputData == 'load':
-                pass
+                awd.Cache.save(awd.Targets, awd.WebShell)
             elif inputData == 'clean':
-                pass
+                awd.Cache.clean()
             elif inputData == 'add_attack_target':
-                awd.add_attack_target()
+                awd.Targets.add()
+            elif inputData == 'scan_attack_targets':
+                awd.Targets.scan()
             elif inputData == 'show_attack_targets':
-                pass
+                awd.Targets.show()
             elif inputData == 'delete_attack_target':
-                pass
+                awd.Targets.delete()
             elif inputData == 'add_attack_shell':
-                pass
+                awd.WebShell.add()
             elif inputData == 'show_attack_shells':
-                pass
+                awd.WebShell.show()
             elif inputData == 'delete_attack_shell':
-                pass
+                awd.WebShell.delete()
             elif inputData == 'operate_attack_shell':
                 pass
             elif inputData == 'show_flags':
@@ -70,8 +78,7 @@ def main():
             elif inputData == 'set_attack_time':
                 pass
             else:
-                output = Output_color.Color('Can\'t find the corresponding operation! please input again!', 'red').print()
-                print(output)
+                print(Color('Can\'t find the corresponding operation! please input again!', 'red').print())
 
         except KeyboardInterrupt:
             error()
