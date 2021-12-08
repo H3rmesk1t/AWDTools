@@ -1,6 +1,6 @@
 from libs import Awd
-from libs import Help
 from libs.OutputColor import Color
+
 from prompt_toolkit import prompt
 from prompt_toolkit.history import InMemoryHistory
 from prompt_toolkit.completion import WordCompleter
@@ -70,12 +70,13 @@ def main():
             elif inputData == 'delete_attack_shell':
                 awd.WebShell.delete()
             elif inputData == 'operate_attack_shell':
-                pass
+                awd.WebShell.operate()
             elif inputData == 'show_flags':
-                pass
+                awd.Flag.show_flag()
             elif inputData == 'submit_flags':
-                pass
+                awd.Flag.submit_flag()
             elif inputData == 'set_attack_time':
+                print(Color('This feature has not yet been implemented.', 'red').print())
                 pass
             else:
                 print(Color('Can\'t find the corresponding operation! please input again!', 'red').print())

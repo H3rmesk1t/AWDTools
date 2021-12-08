@@ -1,5 +1,4 @@
 import json
-
 from libs.OutputColor import Color
 
 class Config:
