@@ -1,6 +1,7 @@
 import re
 import os
 import pickle
+from libs.AttackRequest import AttackRequest
 from libs.Tips import Remove
 from libs.OutputColor import Color
 
@@ -88,11 +89,23 @@ class WebShell:
     def __init__(self):
         self.webshells = []
         self.Targets = Targets()
+        self.AttackRequest = AttackRequest()
 
-    @staticmethod
-    def upload_horse(type):
+    def upload_horse(self, type):
+        if type == 'eval' or type == 'assert' or type == 'system':
+            print(Color('Please input the horse_name you need.', 'yellow').print())
+            horse_name = input('[+] horse_name> ').strip()
+            if os.path.exists('horse/' + str(horse_name) + '.php'):
+                for target in self.Targets.targets:
+                    message = '[+] {}:{}    ====>    '.format(target['ip'], target['port'])
+                    print(Color(message, 'fuchsia').print())
+                    self.AttackRequest.handle_login(target)
 
 
+            else:
+                print(Color('The horse selected not exists.', 'red').print())
+        else:
+            print(Color('WebShell_type is error, can\'t upload WebShell_horse.', 'red').print())
 
     @staticmethod
     def handle_webshell(input_webshell):
@@ -168,6 +181,7 @@ class WebShell:
                     if shellIndex not in range(len(self.webshells)):
                         raise Exception()
                     else:
+                        print(Color('Now WebShell is: ', 'blue').print().ljust(20, ' '), self.webshells[shellIndex])
                         break
                 except:
                     print(Color('Please input WebShellIndex(1~n)', 'red').print())

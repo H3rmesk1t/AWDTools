@@ -1,0 +1,10 @@
+{
+  // 网络代理模块
+  "proxy": {},
+
+  // FLAG格式模块
+  "flag_format": None,
+
+  // 上传WebShell时编码处理模块
+  "shellBase64Encode": True
+}
