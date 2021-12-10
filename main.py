@@ -52,7 +52,7 @@ def main():
             elif inputData == 'save':
                 awd.Cache.save(awd.Targets, awd.WebShell)
             elif inputData == 'load':
-                awd.Cache.save(awd.Targets, awd.WebShell)
+                awd.Cache.load(awd.Targets, awd.WebShell)
             elif inputData == 'clean':
                 awd.Cache.clean()
             elif inputData == 'add_attack_target':
