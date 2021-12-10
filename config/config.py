@@ -5,6 +5,9 @@ class Config:
     """配置属性模块"""
 
     proxy = {}
+    # flag{[0-9a-fA-F]{32}}
+    # flag{[0-9a-f-]{36}}
+    # [0-9a-zA-Z]{32}
     flag_format = None
     shellBase64Encode = True
 

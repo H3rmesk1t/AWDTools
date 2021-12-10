@@ -52,7 +52,7 @@ def main():
             elif inputData == 'save':
                 awd.Cache.save(awd.Targets, awd.WebShell)
             elif inputData == 'load':
-                awd.Cache.save(awd.Targets, awd.WebShell)
+                awd.Cache.load(awd.Targets, awd.WebShell)
             elif inputData == 'clean':
                 awd.Cache.clean()
             elif inputData == 'add_attack_target':
@@ -70,11 +70,11 @@ def main():
             elif inputData == 'delete_attack_shell':
                 awd.WebShell.delete()
             elif inputData == 'operate_attack_shell':
-                awd.WebShell.operate()
+                awd.operate()
             elif inputData == 'show_flags':
-                awd.Flag.show_flag()
+                awd.show_flag()
             elif inputData == 'submit_flags':
-                awd.Flag.submit_flag()
+                awd.submit_flag()
             elif inputData == 'set_attack_time':
                 print(Color('This feature has not yet been implemented.', 'red').print())
                 pass

@@ -1,13 +1,10 @@
 import re
 import os
 import pickle
+import time
 
-import requests
-
-from config.config import Config
 from libs.Tips import Remove
 from libs.OutputColor import Color
-from libs.AttackRequest import AttackRequest
 
 class Targets:
     """目标功能模块"""
@@ -36,6 +33,7 @@ class Targets:
             return False
         return ip, str(port)
 
+
     def add(self):
         print(Color('eg. 127.0.0.1 == 127.0.0.1:80', 'yellow').print())
         print(Color('eg. 127.0.0.1:8888 == 127.0.0.1:8888', 'yellow').print())
@@ -55,6 +53,7 @@ class Targets:
             self.targets = Remove(self.targets).list_remove_repeat()
         print(Color('Now Total targets: {}\n'.format(len(self.targets)), 'blue').print())
 
+
     def scan(self):
         # selfIP = input('Please input yourself ip\n> ')
         # if not self.check_input(selfIP):
@@ -66,11 +65,12 @@ class Targets:
     def show(self):
         if len(self.targets) == 0:
             print(Color('No data added yet!', 'red').print())
-        else:
-            for target in self.targets:
-                target = target['ip'] + ':' + target['port']
-                print(Color(target, 'fuchsia').print())
-            print(Color('Now Total targets: {}\n'.format(len(self.targets)), 'blue').print())
+
+        for target in self.targets:
+            target = target['ip'] + ':' + target['port']
+            print(Color(target, 'fuchsia').print())
+        print(Color('Now Total targets: {}\n'.format(len(self.targets)), 'blue').print())
+
 
     def delete(self):
         self.show()
@@ -91,106 +91,7 @@ class WebShell:
     """WebShell功能模块"""
 
     def __init__(self):
-        self.flag = {}
         self.webshells = []
-        self.Targets = Targets()
-        self.AttackRequest = AttackRequest()
-
-    def handle_result(self, result, target, flag_judge):
-        if result:
-            if Config.flag_format:
-                flag = re.findall(Config.flag_format, result)
-                flag = Remove(flag).list_remove_repeat()
-                if flag:
-                    flag_judge = True
-                    self.flag[target['ip'] + ':' + target['port']] = flag
-                    print(Color(self.flag[target['ip'] + ':' + target['port']], 'blue').print())
-                else:
-                    self.flag[target['ip'] + ':' + target['port']] = []
-                    print(Color('Request successfully but can\'t get flag.', 'red').print())
-            else:
-                print(Color(result, 'blue').print())
-        elif result == '':
-            print(Color('Request successfully but can\'t get result', 'red').print())
-
-        return flag_judge
-
-    def execute_command(self, webshell):
-        global payload
-        global file_path
-        flag_judge = False
-
-        if not Config.flag_format:
-            print(Color('You don\'t set the flag format, please set the flag first.', 'red').print())
-
-        if webshell['type'] == 'eval' or webshell['type'] == 'assert' or webshell['type'] == 'system' or webshell['type'] == 'passthru' or webshell['type'] == 'exec' or webshell['type'] == 'shell_exec':
-            """执行命令获取FLAG"""
-            if webshell['type'] == 'eval':
-                payload = input('[+] eval_payload> ').strip()
-            elif webshell['type'] == 'exec':
-                payload = input('[+] exec_payload> ').strip()
-            elif webshell['type'] == 'assert':
-                payload = input('[+] assert_payload> ').strip()
-            elif webshell['type'] == 'system':
-                payload = input('[+] system_payload> ').strip()
-            elif webshell['type'] == 'passthru':
-                payload = input('[+] passthru_payload> ').strip()
-            elif webshell['type'] == 'shell_exec':
-                payload = input('[+] shell_exec_payload> ').strip()
-
-            for target in self.Targets.targets:
-                message = '[+] {}:{}    ====>    '.format(target['ip'], target['port'])
-                print(Color(message, 'fuchsia').print())
-                self.AttackRequest.handle_login(target)
-                execute_result = self.AttackRequest.handle_execute_command(target, webshell, payload)
-                flag_judge = self.handle_result(execute_result, target, flag_judge)
-
-        elif webshell['type'] == 'readfile' or webshell['type'] == 'include' or webshell['type'] == 'require' or webshell['type'] == 'file_get_contents' or webshell['type'] == 'include_once' or webshell['type'] == 'require_once':
-            """直接读取FLAG"""
-            if not Config.flag_format:
-                print(Color('This mode can\'t set Config.flag_format None', 'red').print())
-
-            if webshell['type'] == 'readfile':
-                file_path = input('[+] readfile_filePath> ')
-            elif webshell['type'] == 'include':
-                file_path = input('[+] include_filePath> ')
-            elif webshell['type'] == 'require':
-                file_path = input('[+] require_filePath> ')
-            elif webshell['type'] == 'file_get_contents':
-                file_path = input('[+] file_get_contents_filePath> ')
-            elif webshell['type'] == 'include_once':
-                file_path = input('[+] include_once_filePath> ')
-            elif webshell['type'] == 'require_once':
-                file_path = input('[+] require_once_filePath> ')
-
-            for target in self.Targets.targets:
-                message = '[+] {}:{}    ====>    '.format(target['ip'], target['port'])
-                print(Color(message, 'fuchsia').print())
-                self.AttackRequest.handle_login(target)
-                read_result = self.AttackRequest.handle_read_file(target, webshell, file_path)
-                flag_judge =self.handle_result(read_result, target, flag_judge)
-
-        if flag_judge:
-            Cache.save(self.flag)
-
-
-    def upload_horse(self, webshell):
-        if webshell['type'] == 'eval' or webshell['type'] == 'assert':
-            print(Color('Please input the horse_name you need.', 'yellow').print())
-            horse_name = input('[+] horse_name> ').strip()
-            if os.path.exists('horse/' + str(horse_name) + '.php'):
-                for target in self.Targets.targets:
-                    message = '[+] {}:{}    ====>    '.format(target['ip'], target['port'])
-                    print(Color(message, 'fuchsia').print())
-                    self.AttackRequest.handle_login(target)
-                    upload_result = self.AttackRequest.handle_upload_horse(target, webshell, horse_name)
-                    if upload_result:
-                        self.webshells.append(upload_result)
-                        self.webshells = Remove(self.webshells).list_remove_repeat()
-            else:
-                print(Color('The horse selected not exists.', 'red').print())
-        else:
-            print(Color('WebShell_type is error, can\'t upload WebShell_horse.', 'red').print())
 
     @staticmethod
     def handle_webshell(input_webshell):
@@ -200,17 +101,120 @@ class WebShell:
                 tempList.append(shell)
         if len(tempList) != 4:
             print(Color('Input WebShell is error, please input again!', 'red').print())
+            return False
         webshell = {
-            "WebShell_path" : tempList[0],
-            "WebShell_passwd" : tempList[1],
-            "WebShell_Request" : tempList[2].upper(),
-            "WebShell_type" : tempList[3].lower()
+            "WebShell_path": tempList[0],
+            "WebShell_passwd": tempList[1],
+            "WebShell_Request": tempList[2].upper(),
+            "WebShell_type": tempList[3].lower()
         }
         if webshell['WebShell_Request'] not in ['GET', 'POST', 'REQUEST', 'GLOBAL']:
             print(Color('Input WebShell_Request is error, please input again!', 'red').print())
-        if webshell['WebShell_type'] not in ['eval', 'assert', 'system', 'popen', 'exec', 'shell exec', 'passthru', 'readfile', 'include', 'require', 'file_get_contents']:
+            return False
+        if webshell['WebShell_type'] not in ['eval', 'assert', 'system', 'popen', 'exec', 'shell exec', 'passthru',
+                                             'readfile', 'include', 'require', 'file_get_contents']:
             print(Color('Input WebShell_type is error, please input again!', 'red').print())
+            return False
         return webshell
+
+
+    # def handle_result(self, result, target, flag_judge):
+    #     if result:
+    #         if Config.flag_format:
+    #             flag = re.findall(Config.flag_format, result)
+    #             flag = Remove(flag).list_remove_repeat()
+    #             if flag:
+    #                 flag_judge = True
+    #                 Awd().flag[target['ip'] + ':' + target['port']] = flag
+    #                 print(Color(Awd().flag[target['ip'] + ':' + target['port']], 'blue').print())
+    #             else:
+    #                 Awd().flag[target['ip'] + ':' + target['port']] = []
+    #                 print(Color('Request successfully but can\'t get flag.', 'red').print())
+    #         else:
+    #             print(Color(result, 'blue').print())
+    #     elif result == '':
+    #         print(Color('Request successfully but can\'t get result', 'red').print())
+    #
+    #     return flag_judge
+    #
+    #
+    # def execute_command(self, webshell):
+    #     global payload
+    #     global file_path
+    #     flag_judge = False
+    #
+    #     if not Config.flag_format:
+    #         print(Color('You don\'t set the flag format, please set the flag first.', 'red').print())
+    #
+    #     if webshell['type'] == 'eval' or webshell['type'] == 'assert' or webshell['type'] == 'system' or webshell['type'] == 'passthru' or webshell['type'] == 'exec' or webshell['type'] == 'shell_exec':
+    #         """执行命令获取FLAG"""
+    #         if webshell['type'] == 'eval':
+    #             payload = input('[+] eval_payload> ').strip()
+    #         elif webshell['type'] == 'exec':
+    #             payload = input('[+] exec_payload> ').strip()
+    #         elif webshell['type'] == 'assert':
+    #             payload = input('[+] assert_payload> ').strip()
+    #         elif webshell['type'] == 'system':
+    #             payload = input('[+] system_payload> ').strip()
+    #         elif webshell['type'] == 'passthru':
+    #             payload = input('[+] passthru_payload> ').strip()
+    #         elif webshell['type'] == 'shell_exec':
+    #             payload = input('[+] shell_exec_payload> ').strip()
+    #
+    #         for target in Awd().Targets.targets:
+    #             message = '[+] {}:{}    ====>    '.format(target['ip'], target['port'])
+    #             print(Color(message, 'fuchsia').print())
+    #             Awd().AttackRequest.handle_login(target)
+    #             execute_result = Awd().AttackRequest.handle_execute_command(target, webshell, payload)
+    #             flag_judge = self.handle_result(execute_result, target, flag_judge)
+    #
+    #     elif webshell['type'] == 'readfile' or webshell['type'] == 'include' or webshell['type'] == 'require' or webshell['type'] == 'file_get_contents' or webshell['type'] == 'include_once' or webshell['type'] == 'require_once':
+    #         """直接读取FLAG"""
+    #         if not Config.flag_format:
+    #             print(Color('This mode can\'t set Config.flag_format None', 'red').print())
+    #
+    #         if webshell['type'] == 'readfile':
+    #             file_path = input('[+] readfile_filePath> ')
+    #         elif webshell['type'] == 'include':
+    #             file_path = input('[+] include_filePath> ')
+    #         elif webshell['type'] == 'require':
+    #             file_path = input('[+] require_filePath> ')
+    #         elif webshell['type'] == 'file_get_contents':
+    #             file_path = input('[+] file_get_contents_filePath> ')
+    #         elif webshell['type'] == 'include_once':
+    #             file_path = input('[+] include_once_filePath> ')
+    #         elif webshell['type'] == 'require_once':
+    #             file_path = input('[+] require_once_filePath> ')
+    #
+    #         for target in Awd().Targets.targets:
+    #             message = '[+] {}:{}    ====>    '.format(target['ip'], target['port'])
+    #             print(Color(message, 'fuchsia').print())
+    #             Awd().AttackRequest.handle_login(target)
+    #             read_result = Awd().AttackRequest.handle_read_file(target, webshell, file_path)
+    #             flag_judge =self.handle_result(read_result, target, flag_judge)
+    #
+    #     if flag_judge:
+    #         Awd().Cache.save(Awd().flag)
+    #
+    #
+    # def upload_horse(self, webshell):
+    #     if webshell['type'] == 'eval' or webshell['type'] == 'assert':
+    #         print(Color('Please input the horse_name you need.', 'yellow').print())
+    #         horse_name = input('[+] horse_name> ').strip()
+    #         if os.path.exists('horse/' + str(horse_name) + '.php'):
+    #             for target in Awd().Targets.targets:
+    #                 message = '[+] {}:{}    ====>    '.format(target['ip'], target['port'])
+    #                 print(Color(message, 'fuchsia').print())
+    #                 Awd().AttackRequest.handle_login(target)
+    #                 upload_result = Awd().AttackRequest.handle_upload_horse(target, webshell, horse_name)
+    #                 if upload_result:
+    #                     Awd().WebShell.webshells.append(upload_result)
+    #                     Awd().WebShell.webshells = Remove(Awd().WebShell.webshells).list_remove_repeat()
+    #         else:
+    #             print(Color('The horse selected not exists.', 'red').print())
+    #     else:
+    #         print(Color('WebShell_type is error, can\'t upload WebShell_horse.', 'red').print())
+
 
     def add(self):
         print(Color('eg. [WebShell_path] [WebShell_passwd] [WebShell_Request] [WebShell_type]', 'yellow').print())
@@ -218,23 +222,30 @@ class WebShell:
         print(Color('eg. WebShell_passwd: h3rmesk1t...', 'yellow').print())
         print(Color('eg. WebShell_Request: GET, POST, REQUEST, GLOBAL...', 'yellow').print())
         print(Color('eg. WebShell_type: eval, assert, system, exec, shell_exec, passthru, readfile, include, require, file_get_contents...', 'yellow').print())
+        print(Color('eg. Please input exit to end adding.', 'yellow').print())
+        while True:
+            try:
+                webshell = input('[+] add_webshell> ').strip()
+                if webshell == 'exit':
+                    break
+                webshell = self.handle_webshell(webshell)
+                if webshell:
+                    self.webshells.append(webshell)
+                    self.webshells = Remove(self.webshells).list_remove_repeat()
+                    print(Color('Successfully Add WebShell!', 'blue').print())
+            except Exception as e:
+                print(Color(str(e), 'red').print())
 
-        try:
-            webshell = input('[+] add_webshell> ').strip()
-            if self.handle_webshell(webshell):
-                self.webshells.append(webshell)
-                self.webshells = Remove(self.webshells).list_remove_repeat()
-                print(Color('Successfully Add WebShell!', 'blue').print())
-        except Exception as e:
-            print(Color(str(e), 'red').print())
 
     def show(self):
         if len(self.webshells) == 0:
             print(Color('No data added yet!', 'red').print())
+
         for i in range(len(self.webshells)):
             print(Color('[' + str(i+1) + '] ' + str(self.webshells[i]), 'fuchsia').print())
 
         print(Color('Now Total WebShells: {}\n'.format(len(self.webshells)), 'blue').print())
+
 
     def delete(self):
         self.show()
@@ -250,41 +261,42 @@ class WebShell:
                 del self.webshells[int(WebShellIndex) - 1]
         print(Color('Now Total WebShells: {}\n'.format(len(self.webshells)), 'blue').print())
 
-    def operate(self):
-        if len(self.Targets.targets) == 0:
-            print(Color('No target_ip data added yet!\nPlease use \'add_attack_target\' to add target_ip.\n', 'red').print())
-        if len(self.webshells) == 0:
-            print(Color('No WebShell data added yet!\nPlease use \'add_attack_shell\' to add WebShell.\n', 'red').print())
-        shellIndex = 0
-        if len(self.webshells) > 1:
-            self.show()
-            print(Color('Please choose a WebShell to do command. Input exit to end operate.\n', 'yellow').print())
-            while True:
-                try:
-                    shellIndex = input('[+] WebShellIndex> ')
-                    if shellIndex == 'exit':
-                        break
-                    shellIndex = int(shellIndex) - 1
-                    if shellIndex not in range(len(self.webshells)):
-                        raise Exception()
-                    else:
-                        print(Color('Now WebShell is: ', 'blue').print().ljust(20, ' '), self.webshells[shellIndex])
-                        break
-                except:
-                    print(Color('Please input WebShellIndex(1~n)\n', 'red').print())
 
-        # webshell_type = None
-        # try:
-        #     webshell_type = self.webshells[shellIndex]['type']
-        # except Exception as e:
-        #     errorMessage = 'No WebShell!' + str(e) + '\n'
-        #     print(Color(errorMessage, 'red').print())
-
-        print(Color('If you want to upload webshell-horse, please input \'1\'\nIf you want to execute command, please input \'2\'\nPress Ctrl+C to end operate!\n', 'yellow').print())
-        if input('> ').strip().lower() == '1':
-            self.upload_horse(self.webshells[shellIndex])
-        elif input('> ').strip().lower() == '2':
-            self.execute_command(self.webshells[shellIndex])
+    # def operate(self):
+    #     if len(Awd().Targets.targets) == 0:
+    #         print(Color('No target_ip data added yet!\nPlease use \'add_attack_target\' to add target_ip.\n', 'red').print())
+    #     if len(Awd().WebShell.webshells) == 0:
+    #         print(Color('No WebShell data added yet!\nPlease use \'add_attack_shell\' to add WebShell.\n', 'red').print())
+    #     shellIndex = 0
+    #     if len(Awd().WebShell.webshells) > 1:
+    #         self.show()
+    #         print(Color('Please choose a WebShell to do command. Input exit to end operate.\n', 'yellow').print())
+    #         while True:
+    #             try:
+    #                 shellIndex = input('[+] WebShellIndex> ')
+    #                 if shellIndex == 'exit':
+    #                     break
+    #                 shellIndex = int(shellIndex) - 1
+    #                 if shellIndex not in range(len(Awd().WebShell.webshells)):
+    #                     raise Exception()
+    #                 else:
+    #                     print(Color('Now WebShell is: ', 'blue').print().ljust(20, ' '), Awd().WebShell.webshells[shellIndex])
+    #                     break
+    #             except:
+    #                 print(Color('Please input WebShellIndex(1~n)\n', 'red').print())
+    #
+    #     # webshell_type = None
+    #     # try:
+    #     #     webshell_type = self.webshells[shellIndex]['type']
+    #     # except Exception as e:
+    #     #     errorMessage = 'No WebShell!' + str(e) + '\n'
+    #     #     print(Color(errorMessage, 'red').print())
+    #
+    #     print(Color('If you want to upload webshell-horse, please input \'1\'\nIf you want to execute command, please input \'2\'\nPress Ctrl+C to end operate!\n', 'yellow').print())
+    #     if input('> ').strip().lower() == '1':
+    #         self.upload_horse(Awd().WebShell.webshells[shellIndex])
+    #     elif input('> ').strip().lower() == '2':
+    #         self.execute_command(Awd().WebShell.webshells[shellIndex])
 
 
 class Cache:
@@ -301,29 +313,30 @@ class Cache:
         if not os.path.exists('cache'):
             os.mkdir('cache')
 
+
     def save(self, target, webshell):
-        if len(target.targets) == 0:
-            print(Color('No target_ip data added yet!', 'red').print())
-        if len(webshell.webshells) == 0:
-            print(Color('No webshell data added yet!', 'red').print())
+        if len(target.targets) + len(webshell.webshells) == 0:
+            print(Color('No target_ip data or target_webshell added yet!', 'red').print())
 
         try:
             with open(self.targets_dat, 'wb') as f:
                 pickle.dump(target.targets, f)
             with open(self.targets_txt, 'w') as f:
-                pickle.dump(target.targets, f)
+                f.write(str(target.targets))
+                f.close()
             with open(self.webshell_dat, 'wb') as f:
                 pickle.dump(webshell.webshells, f)
             with open(self.webshell_txt, 'w') as f:
-                pickle.dump(webshell.webshells, f)
+                f.write(str(webshell.webshells))
+                f.close()
+            print(Color('Successfully save data.', 'blue').print())
         except Exception as e:
             print(Color(e, 'red').print())
 
+
     def load(self, target, webshell):
-        if not os.path.exists(self.targets_dat):
-            print(Color('Load target_ip data failed, please save data first!', 'red').print())
-        if not os.path.exists(self.webshell_dat):
-            print(Color('Load webshell data failed, please save data first!', 'red').print())
+        if not os.path.exists(self.targets_dat) and not os.path.exists(self.webshell_dat):
+            print(Color('No data saved yet!', 'red').print())
 
         try:
             """加载存储的目标IP"""
@@ -343,6 +356,7 @@ class Cache:
         except Exception as e:
             print(Color(e, 'red').print())
 
+
     def clean(self):
         if not os.path.exists(self.targets_dat):
             print(Color('No target_ip data added yet!', 'red').print())
@@ -360,49 +374,62 @@ class Cache:
         except Exception as e:
             print(Color(e, 'red').print())
 
+    @staticmethod
+    def save_flag(flag):
+        with open(Cache.flag_dat, 'wb') as f:
+            pickle.dump(flag, f)
+        with open(Cache.flag_txt, 'a') as f:
+            now_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+            f.write("\n" + "*" * 73 + "\n")
+            f.write("-" * 27 + now_time + "-" * 27 + "\n")
+            f.write("*" * 73 + "\n\n")
+            for flag in flag.values():
+                f.write("{}\n".format(flag))
 
-class Flag:
-    def __init__(self):
-        self.flag = False
-        self.WebShell = WebShell()
-        self.interface = None
-
-    def show_flag(self):
-        for flag in self.WebShell.flag.values():
-            if flag:
-                print(Color(flag, 'fuchsia').print())
-                self.flag = True
-        if not self.flag:
-            return print(Color('Haven\'t get flag.', 'red').print())
-
-    def submit_flag(self):
-        global url
-
-        for flag in self.WebShell.flag.values():
-            if flag:
-                self.flag = True
-        if not self.flag:
-            return print(Color('Haven\'t get flag.', 'red').print())
-
-        try:
-            for target, flags in self.WebShell.flag:
-                target = '[+] {}    ====>'.format(target)
-                print(Color(target, 'fuchsia'))
-
-                ip = target.split(':')[0]
-                port = target.split(':')[1]
-
-                # url = 'http://10.1.8.10/event/1/awd/flag/?token=4826efa9d50c137b&flag=%s'
-                url = 'http://{}:{}/{}%s'.format(ip, port, self.interface)
-
-                for flag in flags:
-                    flag = flag.strip()
-                    try:
-                        response = requests.post(url%flag, timeout=2, proxies=Config.proxy)
-                        responseContent = response.content.decode('utf-8').strip()
-                        print(Color(responseContent, 'blue').print())
-                    except requests.Timeout:
-                        print(Color('Request timeout!', 'red').print())
-        except Exception as e:
-            errorMessge = 'Submit error!' + str(e)
-            print(Color(errorMessge, 'red').print())
+# class Flag:
+#
+#     def __init__(self):
+#         self.flag = False
+#         self.interface = None
+#
+#
+#     def show_flag(self):
+#         for flag in Awd().flag.values():
+#             if flag:
+#                 print(Color(flag, 'fuchsia').print())
+#                 self.flag = True
+#         if not self.flag:
+#             return print(Color('Haven\'t get flag.', 'red').print())
+#
+#
+#     def submit_flag(self):
+#         global url
+#
+#         for flag in Awd().flag.values():
+#             if flag:
+#                 self.flag = True
+#         if not self.flag:
+#             return print(Color('Haven\'t get flag.', 'red').print())
+#
+#         try:
+#             for target, flags in Awd().flag:
+#                 target = '[+] {}    ====>'.format(target)
+#                 print(Color(target, 'fuchsia'))
+#
+#                 ip = target.split(':')[0]
+#                 port = target.split(':')[1]
+#
+#                 # url = 'http://10.1.8.10/event/1/awd/flag/?token=4826efa9d50c137b&flag=%s'
+#                 url = 'http://{}:{}/{}%s'.format(ip, port, self.interface)
+#
+#                 for flag in flags:
+#                     flag = flag.strip()
+#                     try:
+#                         response = requests.post(url%flag, timeout=2, proxies=Config.proxy)
+#                         responseContent = response.content.decode('utf-8').strip()
+#                         print(Color(responseContent, 'blue').print())
+#                     except requests.Timeout:
+#                         print(Color('Request timeout!', 'red').print())
+#         except Exception as e:
+#             errorMessge = 'Submit error!' + str(e)
+#             print(Color(errorMessge, 'red').print())
