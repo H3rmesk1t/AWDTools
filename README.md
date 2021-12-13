@@ -33,7 +33,7 @@ python main.py
 > 还未开发
 
 ## 木马描述
-> 双层`MD5`的`hash`值：`ddbaedeb6010fcd8df373dd723ff6920`
+> 双层`MD5`的`D1noH3rmesk1t`的值为：`ddbaedeb6010fcd8df373dd723ff6920`
 
 ### common_horse_1
 ```php
@@ -126,5 +126,5 @@ python main.py
 ?>
 ```
 
-### undead_horse_3
+### undead_horse_4
 > 写入`.htaccess`或者`.user.ini`文件
