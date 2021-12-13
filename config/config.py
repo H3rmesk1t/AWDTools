@@ -4,7 +4,11 @@ from libs.OutputColor import Color
 class Config:
     """配置属性模块"""
 
-    proxy = {}
+    proxy = {
+        "http": None,
+        "https": None,
+    }
+    horse_name = '/var/www/webroot/lndex.php'
     # flag{[0-9a-fA-F]{32}}
     # flag{[0-9a-f-]{36}}
     # [0-9a-zA-Z]{32}

