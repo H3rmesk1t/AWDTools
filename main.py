@@ -27,6 +27,7 @@ def main():
          'clean',
          'add_attack_target',
          'scan_attack_targets',
+         'scan_port_by_ip',
          'show_attack_targets',
          'delete_attack_target',
          'add_attack_shell',
@@ -59,6 +60,10 @@ def main():
                 awd.Targets.add()
             elif inputData == 'scan_attack_targets':
                 awd.Targets.scan()
+            elif inputData == 'scan_port_by_ip':
+                awd.Targets.scan_port_by_ip()
+
+
             elif inputData == 'show_attack_targets':
                 awd.Targets.show()
             elif inputData == 'delete_attack_target':
