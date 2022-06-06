@@ -60,7 +60,12 @@ class Targets:
         #     print(Color('IP Format Error!', 'red').print())
         # print('The module has not yet been developed!')
         print(Color('The module has not yet been developed!', 'red').print())
-
+    def scan_port_by_ip(self):
+        temIP = input('Please input a ip or a address\n> ')
+        from pyportscanner import pyscanner
+        scanner = pyscanner.PortScanner(target_ports=100, timeout=1, verbose=True)
+        scanner.scan(temIP)
+        print(Color('扫描完成!', 'red').print())
 
     def show(self):
         if len(self.targets) == 0:

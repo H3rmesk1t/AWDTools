@@ -24,4 +24,5 @@ class Help:
         print(output(output='   operate_attack_shell', color='cyan').print().ljust(40, ' '), output(output='Operate the attack_shell.', color='white').print())
         print(output(output='   show_flags', color='cyan').print().ljust(40, ' '), output(output='Show flags.', color='white').print())
         print(output(output='   submit_flags', color='cyan').print().ljust(40, ' '), output(output='Submit flags.', color='white').print())
-        print(output(output='   set_attack_time', color='cyan').print().ljust(40, ' '), output(output='Set attack_time.\n', color='white').print())
+        print(output(output='   set_attack_time', color='cyan').print().ljust(40, ' '), output(output='Set attack_time.', color='white').print())
+        print(output(output='   scan_port_by_ip', color='cyan').print().ljust(40, ' '), output(output='scan address\'s ports.\n', color='white').print())
